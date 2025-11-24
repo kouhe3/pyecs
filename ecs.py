@@ -46,7 +46,6 @@ class World:
     entitys: Dict[EntityID, Dict[Type[Component],
                                  Component]] = field(default_factory=dict)
     _next_id: int = 0
-    events: EventBuffer = field(default_factory=EventBuffer)
     resources: Dict[Type[Any], Any] = field(default_factory=dict)
 
     def spawn(self, *components: Component):
@@ -93,19 +92,21 @@ class World:
 
     def remove_component(self, entity: EntityID, component_type: Type[C]):
         self.entitys[entity].pop(component_type)
+    def has_component(self, entity: EntityID, component_type: Type[C]) -> bool:
+        return component_type in self.entitys[entity].keys()
 
-
-System = Callable[[World], None]
+System = Callable[[World,EventBuffer], None]
 
 
 @dataclass
 class Schedule:
     systems: List[System] = field(default_factory=list)
+    events: EventBuffer = field(default_factory=EventBuffer)
 
     def add(self, *system: System):
         self.systems.extend(system)
 
     def run(self, world: World):
         for system in self.systems:
-            system(world)
-        world.events.update()
+            system(world,self.events)
+        self.events.update()
