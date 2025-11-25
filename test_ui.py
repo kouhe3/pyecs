@@ -1,16 +1,16 @@
+from dataclasses import dataclass
+from typing import Tuple
+
+import pygame
+
 from ecs import (
     EventBuffer,
     Event,
     Component,
     EntityID,
     World,
-    Schedule,
-    Resource,
-    System
+    Schedule
 )
-from typing import Type, TypeVar, Generic, Dict, List, Callable, Any, Iterable, cast, Union, Tuple
-from dataclasses import dataclass, field
-import pygame
 
 
 @dataclass
@@ -60,8 +60,16 @@ clock = pygame.time.Clock()
 state = State()
 s = Schedule()
 world = World()
-mybutton = world.spawn(Node(0, 0, 100, 50), Text(
+my_button = world.spawn(Node(0, 0, 100, 50), Text(
     "Hello World"), Button(), Interaction(), HelloWorldButton())
+
+
+def handle_hello_world(e: ClickEvent, w: World):
+    if e.entity == my_button:
+        w.get_component(e.entity, Text).content = "You Click Me"
+
+
+world.add_observer(ClickEvent, handle_hello_world)
 
 
 def render_system(world: World, e: EventBuffer):
@@ -69,8 +77,8 @@ def render_system(world: World, e: EventBuffer):
     for entity in world.query(Node, Text):
         node = world.get_component(entity, Node)
         nx, ny = state.clicked_pos
-        node.x = (nx+node.x-50)/2
-        node.y = (ny+node.y-25)/2
+        node.x = (nx + node.x - 50) / 2
+        node.y = (ny + node.y - 25) / 2
         pygame.draw.rect(
             screen, 'blue', (node.x, node.y, node.width, node.height))
         txt = world.get_component(entity, Text)
@@ -88,25 +96,11 @@ def mouse_system(world: World, e: EventBuffer):
             state.clicked_pos = (x, y)
             for entity in world.query(Button, Node):
                 node = world.get_component(entity, Node)
-                if x > node.x and x < node.x + node.width and y > node.y and y < node.y + node.height:
-                    e.write(ClickEvent(entity))
+                if node.x < x < node.x + node.width and node.y < y < node.y + node.height:
+                    world.trigger(ClickEvent(entity))
 
 
-def event_system(world: World, e: EventBuffer):
-    for click_event in e.read(ClickEvent):
-        world.get_component(click_event.entity, Interaction).click = True
-        print("Clicked on entity", click_event.entity.id)
-        if world.has_component(click_event.entity, HelloWorldButton):
-            counter = world.get_component(
-                click_event.entity, HelloWorldButton).counter
-            counter += 1
-            world.get_component(click_event.entity,
-                                HelloWorldButton).counter = counter
-            world.get_component(click_event.entity,
-                                Text).content = f"{counter}"
-
-
-s.add(render_system, mouse_system, event_system)
+s.add(render_system, mouse_system)
 while state.running:
     s.run(world)
     clock.tick(60)
