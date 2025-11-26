@@ -1,7 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import List, Callable, Type, Dict, TypeVar, Iterable, Any, FrozenSet, Tuple
-from collections import defaultdict
+from typing import List, Callable, Type, Dict, TypeVar, Iterable, Any, FrozenSet
 
 
 class Component:
@@ -25,17 +24,19 @@ EntityID = int
 
 @dataclass
 class EventBuffer:
-    current: Dict[Type[Event], List[Event]] = field(default_factory=lambda: defaultdict(list))
-    next: Dict[Type[Event], List[Event]] = field(default_factory=lambda: defaultdict(list))
+    current: Dict[Type[Event], List[Event]] = field(default_factory=dict)
+    next: Dict[Type[Event], List[Event]] = field(default_factory=dict)
 
     def read(self, t: Type[E]) -> List[E]:
-        return self.current[t]
+        if t in self.current:
+            return self.current[t]
+        return []
 
     def write(self, *events: E):
         for ev in events:
             t = type(ev)
-            # if t not in self.next:
-            # self.next[t] = []
+            if t not in self.next:
+                self.next[t] = []
             self.next[t].append(ev)
 
     def update(self):
@@ -64,14 +65,12 @@ class World:
     resources: Dict[Type[Any], Any] = field(default_factory=dict)
     observers: List[Observer] = field(default_factory=list)
     tick: int = 0  # 新增：当前 tick
-    spawn_ticks: Dict[EntityID, int] = field(default_factory=dict)  # 新增：生成 tick
     change_ticks: Dict[EntityID, Dict[Type[Component], int]] = field(default_factory=dict)  # 新增：变化 tick
 
     def spawn(self, *components: Component):
         e_id = EntityID(self._next_id)
         self._next_id += 1
         component_type = frozenset(type(c) for c in components)
-        self.spawn_ticks[e_id] = self.tick
         self.change_ticks[e_id] = {type(c): self.tick for c in components}
         self.entity_components[e_id] = {type(c): c for c in components}
         if component_type not in self.archetypes:
@@ -91,14 +90,12 @@ class World:
         self.entity_archetype.pop(entity)
         if entity in self.entity_components:
             self.entity_components.pop(entity)
-        self.spawn_ticks.pop(entity, None)
         self.change_ticks.pop(entity, None)
 
     def query(self,
               *withs: Type[Component],
               without: Iterable[Type[Component]] = (),
-              changed: set[Type[Component]] = (),
-              spawned: bool = False):
+              changed: set[Type[Component]] = ()):
         with_set = frozenset(withs)
         without_set = frozenset(without)
         changed_set = frozenset(changed)
@@ -110,14 +107,14 @@ class World:
             if archetype_key & without_set:
                 continue
             if changed_set:
-                for e_id in archetype.entities:
-                    entity_added_components = {comp_type for comp_type, tick in self.change_ticks.get(e_id, {}).items()
-                                               if tick == current_tick}
-                    if not changed.issubset(entity_added_components):
-                        continue
-            if spawned:
-                new_entities = [eid for eid in archetype.entities if self.spawn_ticks.get(eid) == current_tick]
-                result.extend(new_entities)
+                filter_list = []
+                for eid in archetype.entities:
+                    if all(
+                            self.change_ticks.get(eid, {}).get(comp_type, -1) >= current_tick - 1
+                            for comp_type in changed_set
+                    ):
+                        filter_list.append(eid)
+                result.extend(filter_list)
             else:
                 result.extend(archetype.entities)
         return result
@@ -136,6 +133,8 @@ class World:
         return self.entity_components[entity][component_type]
 
     def add_component(self, entity: EntityID, component: C):
+        if entity not in self.entity_components:
+            raise ValueError(f"Entity {entity} does not exist")
         current_components = self.entity_components[entity]
         comp_type = type(component)
         self.change_ticks[entity][comp_type] = self.tick
@@ -168,8 +167,7 @@ class World:
             self.archetypes[new_component_type].entities.append(entity)
         new_archetype = self.archetypes[new_component_type]
         self.entity_archetype[entity] = new_archetype
-        for entity in self.change_ticks:
-            self.change_ticks[entity].pop(component_type, None)
+        self.change_ticks[entity].pop(component_type, None)
         return component_to_remove
 
     def has_component(self, entity: EntityID, component_type: Type[C]) -> bool:
