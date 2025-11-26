@@ -11,6 +11,10 @@ class Event:
     pass
 
 
+class EntityEvent(Event):
+    entity: EntityID
+
+
 class Resource:
     pass
 
