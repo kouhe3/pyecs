@@ -53,6 +53,12 @@ class State:
     clicked_pos: Tuple[float, float] = (0, 0)
 
 
+@dataclass
+class MoveToTarget(Component):
+    x: float = 0.0
+    y: float = 0.0
+
+
 pygame.init()
 font = pygame.font.SysFont("arial", 20)
 screen = pygame.display.set_mode((600, 600))
@@ -60,47 +66,72 @@ clock = pygame.time.Clock()
 state = State()
 s = Schedule()
 world = World()
-my_button = world.spawn(Node(0, 0, 100, 50), Text(
-    "Hello World"), Button(), Interaction(), HelloWorldButton())
+my_button = world.spawn(
+    Node(300, 300, 100, 50),
+    Text("Hello World"),
+    Button(),
+    HelloWorldButton(),
+    MoveToTarget()
+)
 
 
-def handle_hello_world(e: ClickEvent, w: World):
-    if e.entity == my_button:
-        w.get_component(e.entity, Text).content = "You Click Me"
-
-
-world.add_observer(ClickEvent, handle_hello_world)
-
-
-def render_system(world: World, e: EventBuffer):
+def render_system(w: World, e: EventBuffer):
     screen.fill('white')
-    for entity in world.query(Node, Text):
-        node = world.get_component(entity, Node)
-        nx, ny = state.clicked_pos
-        node.x = (nx + node.x - 50) / 2
-        node.y = (ny + node.y - 25) / 2
+    for entity in w.query(Node, Text):
+        node = w.get_component(entity, Node)
         pygame.draw.rect(
             screen, 'blue', (node.x, node.y, node.width, node.height))
-        txt = world.get_component(entity, Text)
+        txt = w.get_component(entity, Text)
         surf = font.render(txt.content, True, 'white')
         screen.blit(surf, (node.x, node.y))
     pygame.display.flip()
 
 
-def mouse_system(world: World, e: EventBuffer):
+def mouse_system(w: World, e: EventBuffer):
     for ev in pygame.event.get():
         if ev.type == pygame.QUIT:
             state.running = False
         if ev.type == pygame.MOUSEBUTTONDOWN:
             x, y = pygame.mouse.get_pos()
             state.clicked_pos = (x, y)
-            for entity in world.query(Button, Node):
-                node = world.get_component(entity, Node)
+            for entity in w.query(Button, Node):
+                node = w.get_component(entity, Node)
                 if node.x < x < node.x + node.width and node.y < y < node.y + node.height:
-                    world.trigger(ClickEvent(entity))
+                    e.write(ClickEvent(entity))
+            for entity in w.query(MoveToTarget):
+                move_target = w.get_component(entity, MoveToTarget)
+                move_target.x = x
+                move_target.y = y
 
 
-s.add(render_system, mouse_system)
+def handle_hello_world_button(w: World, e: EventBuffer):
+    for event in e.read(ClickEvent):
+        if w.has_component(event.entity, HelloWorldButton):
+            hello_button = w.get_component(event.entity, HelloWorldButton)
+            hello_button.counter += 1
+            w.get_component(event.entity, Text).content = str(hello_button.counter)
+
+
+def move_system(w: World, e: EventBuffer):
+    for entity in w.query(Node, MoveToTarget):
+        node = w.get_component(entity, Node)
+        move_target = w.get_component(entity, MoveToTarget)
+        dx = move_target.x - node.x
+        dy = move_target.y - node.y
+        node.x += (dx - node.width / 2) / 5
+        node.y += (dy - node.height / 2) / 5
+
+
+def setup(w: World):
+    x, y = pygame.mouse.get_pos()
+    for entity in w.query(Node, MoveToTarget):
+        move_target = w.get_component(entity, MoveToTarget)
+        move_target.x = x
+        move_target.y = y
+
+
+s.add(mouse_system, handle_hello_world_button, move_system, render_system)
+setup(world)
 while state.running:
     s.run(world)
     clock.tick(60)
