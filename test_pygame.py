@@ -91,7 +91,8 @@ def mouse_system(w: World, e: EventBuffer):
     for ev in pygame.event.get():
         if ev.type == pygame.QUIT:
             state.running = False
-        if ev.type == pygame.MOUSEBUTTONDOWN:
+        if ev.type == pygame.MOUSEBUTTONDOWN :
+
             x, y = pygame.mouse.get_pos()
             state.clicked_pos = (x, y)
             for entity in w.query(Button, Node):
