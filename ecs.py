@@ -149,12 +149,6 @@ class World:
         new_archetype = self.archetypes[new_component_type]
         self.entity_archetype[entity] = new_archetype
 
-    def set_component(self, entity: EntityID, comp_type: Type[C], new_value: C):
-        old_value = self.entity_components[entity][comp_type]
-        self.entity_components[entity][comp_type] = new_value
-        self.change_ticks[entity][comp_type] = self.tick
-        return old_value
-
     def remove_component(self, entity: EntityID, component_type: Type[C]) -> C:
         current_components = self.entity_components[entity]
         component_to_remove = current_components.pop(component_type)
