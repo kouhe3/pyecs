@@ -70,7 +70,7 @@ class World:
     observers: List[Observer] = field(default_factory=list)
     tick: int = 0  # 新增：当前 tick
     change_ticks: Dict[EntityID, Dict[Type[Component], int]] = field(default_factory=dict)  # 新增：变化 tick
-
+    event_buffer: EventBuffer = field(default_factory=EventBuffer)
     def spawn(self, *components: Component):
         e_id = EntityID(self._next_id)
         self._next_id += 1
@@ -193,7 +193,6 @@ System = Callable[[World, EventBuffer], None]
 @dataclass(slots=True)
 class Schedule:
     systems: List[System] = field(default_factory=list)
-    events: EventBuffer = field(default_factory=EventBuffer)
 
     def add(self, *system: System):
         self.systems.extend(system)
@@ -201,5 +200,5 @@ class Schedule:
     def run(self, world: World):
         world.tick += 1
         for system in self.systems:
-            system(world, self.events)
-        self.events.update()
+            system(world, world.event_buffer)
+        world.event_buffer.update()
