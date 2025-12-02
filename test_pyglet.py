@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import pyglet
 
-# 假设 ecs 模块保持不变（你已定义）
+
 from ecs import (
     EventBuffer,
     Event,
@@ -51,7 +51,7 @@ class ClickOnEntityEvent(EntityEvent):
 
 @dataclass
 class HelloWorldButton(Component):
-    counter: int = 0  # <-- 注意：必须加类型注解，否则类变量！
+    counter: int = 0
 
 
 window = pyglet.window.Window(width=600, height=600, caption="Hello World")
@@ -64,11 +64,9 @@ def render_system(w: World, e: EventBuffer):
         node = w.get_component(entity, Node)
         text_comp = w.get_component(entity, Text)
 
-        # 绘制矩形（Pyglet 没有直接 draw_rect，需用 OpenGL 或 shapes）
         x, y, w_, h = node.x, node.y, node.width, node.height
         pyglet.shapes.Rectangle(x, y, w_, h, color=(0, 0, 255)).draw()
 
-        # 绘制文字
         label = pyglet.text.Label(
             text_comp.content,
             font_name='Arial',
@@ -105,7 +103,7 @@ class State:
 
 state = State()
 world = World()
-# 创建按钮实体
+
 my_button = world.spawn(
     Node(300, 300, 100, 50),
     Text("Hello"),
