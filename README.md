@@ -19,6 +19,10 @@ This framework includes:
 - Tick-based change tracking for components.
 - Support for global resources.
 
+## Example
+
+check examples in test
+
 ## Core Concepts
 
 - **World**: The central hub managing all entities, components, resources, and events.
