@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import List, Callable, Type, Dict, TypeVar, Iterable, Any, FrozenSet
+from typing import List, Callable, Type, Dict, TypeVar, Iterable, Any, FrozenSet, Set
 
 
 class Component:
@@ -99,7 +99,7 @@ class World:
     def query(self,
               *withs: Type[Component],
               without: Iterable[Type[Component]] = (),
-              changed: set[Type[Component]] = ()):
+              changed: Set[Type[Component]] = ()):
         with_set = frozenset(withs)
         without_set = frozenset(without)
         changed_set = frozenset(changed)
