@@ -108,7 +108,7 @@ world = World()
 # 创建按钮实体
 my_button = world.spawn(
     Node(300, 300, 100, 50),
-    Text("Hello World"),
+    Text("Hello"),
     Button(),
     HelloWorldButton(),
 )
@@ -125,7 +125,7 @@ def on_draw():
 def on_mouse_press(x, y, button, modifiers):
     print("mouse press")
     if button == pyglet.window.mouse.LEFT:
-        s.events.write(ClickEvent(x, y))
+        world.event_buffer.write(ClickEvent(x, y))
 
 
 @window.event
