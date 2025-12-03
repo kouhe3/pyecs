@@ -1,4 +1,4 @@
-from ecs import World, Component, EntityID
+from pyecs import World, Component, EntityID
 from typing import List
 
 

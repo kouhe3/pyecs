@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import pyglet
 
 
-from ecs import (
+from pyecs import (
     EventBuffer,
     Event,
     Component,

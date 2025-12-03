@@ -3,7 +3,7 @@ from typing import Tuple
 
 import pygame
 
-from ecs import (
+from pyecs import (
     EventBuffer,
     Event,
     Component,
