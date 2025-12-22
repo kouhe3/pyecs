@@ -75,7 +75,7 @@ my_button = world.spawn(
 )
 
 
-def render_system(w: World, e: EventBuffer):
+def render_system(w: World):
     screen.fill('white')
     for entity in w.query(Node, Text):
         node = w.get_component(entity, Node)
@@ -87,33 +87,36 @@ def render_system(w: World, e: EventBuffer):
     pygame.display.flip()
 
 
-def mouse_system(w: World, e: EventBuffer):
+def mouse_system(w: World):
+    buf = w.get_resource(EventBuffer)
     for ev in pygame.event.get():
         if ev.type == pygame.QUIT:
             state.running = False
-        if ev.type == pygame.MOUSEBUTTONDOWN :
+        if ev.type == pygame.MOUSEBUTTONDOWN:
 
             x, y = pygame.mouse.get_pos()
             state.clicked_pos = (x, y)
             for entity in w.query(Button, Node):
                 node = w.get_component(entity, Node)
                 if node.x < x < node.x + node.width and node.y < y < node.y + node.height:
-                    e.write(ClickEvent(entity))
+                    buf.write(ClickEvent(entity))
             for entity in w.query(MoveToTarget):
                 move_target = w.get_component(entity, MoveToTarget)
                 move_target.x = x
                 move_target.y = y
 
 
-def handle_hello_world_button(w: World, e: EventBuffer):
-    for event in e.read(ClickEvent):
+def handle_hello_world_button(w: World):
+    buf = w.get_resource(EventBuffer)
+    for event in buf.read(ClickEvent):
         if w.has_component(event.entity, HelloWorldButton):
             hello_button = w.get_component(event.entity, HelloWorldButton)
             hello_button.counter += 1
-            w.get_component(event.entity, Text).content = str(hello_button.counter)
+            w.get_component(event.entity, Text).content = str(
+                hello_button.counter)
 
 
-def move_system(w: World, e: EventBuffer):
+def move_system(w: World):
     for entity in w.query(Node, MoveToTarget):
         node = w.get_component(entity, Node)
         move_target = w.get_component(entity, MoveToTarget)
@@ -129,9 +132,16 @@ def setup(w: World):
         move_target = w.get_component(entity, MoveToTarget)
         move_target.x = x
         move_target.y = y
+    w.insert_resource(EventBuffer())
 
 
-s.add(mouse_system, handle_hello_world_button, move_system, render_system)
+def swap_eventbuffer(w: World):
+    buf = w.get_resource(EventBuffer)
+    buf.update()
+
+
+s.add(mouse_system, handle_hello_world_button,
+      move_system, render_system, swap_eventbuffer)
 setup(world)
 while state.running:
     s.run(world)
