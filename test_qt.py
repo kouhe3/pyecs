@@ -82,7 +82,7 @@ class MainWindow(QWindow):
         self.timer.start()
         self.backingStore = QBackingStore(self)
         self.world = World()
-        self.world.insert_resource(EventBuffer())
+        self.world.add_resource(EventBuffer())
         self.schedule = Schedule()
         self.schedule.add(find_clicked_entity, add_counter)
         self.world.spawn(

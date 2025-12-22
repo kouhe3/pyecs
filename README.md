@@ -43,10 +43,8 @@ check examples in test
 - `add_component(entity_id, component)`: Adds a component to an entity.
 - `remove_component(entity_id, component_type)`: Removes a component.
 - `has_component(entity_id, component_type)`: Checks if entity has a component.
-- `insert_resource(resource)`: Stores a global resource.
+- `add_resource(resource)`: Stores a global resource.
 - `get_resource(resource_type)`: Retrieves a global resource.
-- `add_observer(event_type, callback)`: Add and observer.
-- `trigger(event)`: Trigger observers immediately.
 
 ### `Schedule`
 
@@ -64,14 +62,8 @@ check examples in test
   call to `update()`—typically at the end of the current tick.
 
 - `update()`:  
-  Finalizes the current tick by moving all events from the **next** buffer to the **current** buffer and clearing the *
-  *next** buffer. This ensures that systems always process events that were emitted in the prior tick, preventing race
-  conditions or missed events within a single frame.
-
-> **Note**: The `EventBuffer` is designed to support **deferred event processing**, which is essential for deterministic
-> and consistent behavior in ECS-based simulations or games. Systems receive the buffer as an argument and should
-> generally **read** from it (via `read`) and **write** new events (via `write`), while `update()` is called automatically
-> by the `Schedule.run()` method.
+  Switches the current and next buffers. After calling `update()`, the current buffer will be empty, and the next buffer
+  will contain all events queued during the previous tick.
 
 ## License
 

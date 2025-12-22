@@ -132,7 +132,7 @@ def setup(w: World):
         move_target = w.get_component(entity, MoveToTarget)
         move_target.x = x
         move_target.y = y
-    w.insert_resource(EventBuffer())
+    w.add_resource(EventBuffer())
 
 
 def swap_eventbuffer(w: World):

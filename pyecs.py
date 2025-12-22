@@ -77,18 +77,6 @@ class EventBuffer(Resource):
         self.next.clear()
 
 
-@dataclass(frozen=True, slots=True)
-class Observer(Generic[E]):
-    """Represents a listener for a specific event type.
-
-    Attributes:
-        event_type (Type[Event]): The type of event this observer listens to.
-        callback (Callable[[Event, World], None]): Function called when the event occurs.
-    """
-    event_type: Type[E]
-    callback: Callable[[E, World], None]
-
-
 @dataclass(slots=True, frozen=True)
 class Archetype(Generic[C]):
     """A grouping of entities that share the exact same set of component types.
@@ -200,7 +188,7 @@ class World:
                 result.extend(archetype.entities)
         return result
 
-    def insert_resource(self, resource: R) -> R:
+    def add_resource(self, resource: R) -> R:
         """Stores a global resource in the world.
 
         Args:
@@ -255,12 +243,15 @@ class World:
         """
         return cast(C, self.entity_components[entity][component_type])
 
-    def add_component(self, entity: EntityID, component: Component):
+    def add_component(self, entity: EntityID, component: Component) -> Component:
         """Adds a component to an existing entity.
 
         Args:
             entity: The entity ID.
             component: The component instance to add.
+
+        Returns:
+            The added component.
 
         Raises:
             ValueError: If the entity does not exist.
@@ -282,6 +273,7 @@ class World:
             self.archetypes[new_component_type].entities.append(entity)
         new_archetype = self.archetypes[new_component_type]
         self.entity_archetype[entity] = new_archetype
+        return component
 
     def remove_component(self, entity: EntityID, component_type: Type[C]) -> C:
         """Removes a component from an entity.
