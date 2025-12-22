@@ -17,6 +17,7 @@ from PySide6.QtGui import (
     QBackingStore,
     QGuiApplication,
     QPainter,
+    QFont,
 )
 from pyecs import (
     Component, EntityEvent, Schedule,
@@ -100,6 +101,7 @@ class MainWindow(QWindow):
         device = self.backingStore.paintDevice()
         painter = QPainter(device)
         painter.fillRect(background, QColor(0, 0, 0))
+        painter.setFont(QFont("Arial", 20))
         rect_list = self.world.query(Rect)
         for entity in rect_list:
             rect = self.world.get_component(entity, Rect)
