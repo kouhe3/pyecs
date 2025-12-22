@@ -87,6 +87,8 @@ class MainWindow(QWindow):
         self.schedule.add(find_clicked_entity, add_counter)
         self.world.spawn(
             Rect(100, 100, 100, 100, QColor(255, 0, 0)), Counter())
+        self.world.spawn(
+            Rect(300, 200, 100, 100, QColor(0, 255, 0)), Counter())
 
     def update(self):
         self.world.get_resource(EventBuffer).update()
